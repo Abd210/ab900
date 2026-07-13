@@ -1,5 +1,5 @@
 /**
- * auth.js — Authentication layer for AB-900 Practice Lab
+ * auth.js — Authentication layer for AZ / AB Practice Lab
  * Uses Firebase Client SDK.
  */
 
@@ -40,17 +40,17 @@ function initAuth(onSuccess) {
 }
 
 function renderAuthScreen() {
-  document.title = "Sign In · AB-900 Practice Lab";
+  document.title = "Sign In · AZ / AB Practice Lab";
   const app = document.querySelector("#app");
 
   app.innerHTML = `
     <section class="auth-shell">
       <div class="auth-card">
         <div class="auth-brand">
-          <span class="auth-brand-mark">AB</span>
+          <span class="auth-brand-mark">AZ</span>
           <div>
             <strong>Practice Lab</strong>
-            <small>Microsoft 365 Copilot &amp; Agent Administration</small>
+            <small>AZ-900 &amp; AB-900 exam simulators</small>
           </div>
         </div>
 

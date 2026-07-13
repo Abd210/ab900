@@ -1,10 +1,23 @@
 {
   "hosting": {
     "public": ".",
+    "headers": [
+      {
+        "source": "**/*.@(js|css|json)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "scripts/**",
+      "tmp/**"
     ]
   }
 }
