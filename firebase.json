@@ -17,7 +17,16 @@
       "**/.*",
       "**/node_modules/**",
       "scripts/**",
-      "tmp/**"
+      "tmp/**",
+      "ab900new/**",
+      "az-questions.json",
+      "az-full-questions.json",
+      "AZ-900-Questions-Verified.csv",
+      "AZ-900-Questions-Verified.json",
+      "test-blob.js",
+      "README.md",
+      "package.json",
+      "package-lock.json"
     ]
   }
 }

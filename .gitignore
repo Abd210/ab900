@@ -3,3 +3,11 @@ tmp/
 .vercel
 node_modules/
 .env*
+__pycache__/
+ab900new/
+
+# Raw / intermediate data files (not needed by the live site)
+az-questions.json
+az-full-questions.json
+AZ-900-Questions-Verified.csv
+AZ-900-Questions-Verified.json

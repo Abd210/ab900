@@ -70,10 +70,6 @@
       "type": "single",
       "options": [
         {
-          "id": "information that might be used in an investigation",
-          "label": "information that might be used in an investigation"
-        },
-        {
           "id": "Customer Lockbox",
           "label": "Customer Lockbox"
         },
@@ -106,10 +102,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "You can manage Microsoft Intune by using the",
-          "label": "You can manage Microsoft Intune by using the"
-        },
         {
           "id": "Azure Active Directory admin center",
           "label": "Azure Active Directory admin center"
@@ -144,10 +136,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Federation is used to establish",
-          "label": "Federation is used to establish"
-        },
         {
           "id": "multi-factor authentication (MFA)",
           "label": "multi-factor authentication (MFA)"
@@ -467,7 +455,7 @@
     "id": 16,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Authentication",
+    "answer": "Authorization",
     "explanation": "Correct - from: https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization >\n\"...authorization (providing access to secure data)...\"\nReference:\nhttps://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -476,10 +464,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "v is the process of identifying whether a signed-in user can access a specific resource",
-          "label": "v is the process of identifying whether a signed-in user can access a specific resource"
-        },
         {
           "id": "Authentication",
           "label": "Authentication"
@@ -497,7 +481,7 @@
           "label": "Single sign-on (SSO)"
         }
       ],
-      "correct": "Authentication"
+      "correct": "Authorization"
     }
   },
   {
@@ -515,20 +499,8 @@
       "type": "single",
       "options": [
         {
-          "id": "enables collaboration with business partners from external",
-          "label": "enables collaboration with business partners from external"
-        },
-        {
-          "id": "organizations such as suppliers, partners, and vendors. External",
-          "label": "organizations such as suppliers, partners, and vendors. External"
-        },
-        {
           "id": "Active Directory Domain Services (AD DS)",
           "label": "Active Directory Domain Services (AD DS)"
-        },
-        {
-          "id": "users appear as guest users in the directory",
-          "label": "users appear as guest users in the directory"
         },
         {
           "id": "Active Directory forest trusts",
@@ -755,80 +727,36 @@
       "type": "single",
       "options": [
         {
-          "id": "• Search resources, services, and docs (G+/)",
-          "label": "• Search resources, services, and docs (G+/)"
-        },
-        {
-          "id": "Microsoft Azure",
-          "label": "Microsoft Azure"
-        },
-        {
-          "id": "Azure services",
-          "label": "Azure services"
-        },
-        {
-          "id": "+",
-          "label": "+"
-        },
-        {
-          "id": "•",
-          "label": "•"
-        },
-        {
-          "id": "Create a",
-          "label": "Create a"
-        },
-        {
-          "id": "Subscriptions",
-          "label": "Subscriptions"
-        },
-        {
-          "id": "Policy",
-          "label": "Policy"
-        },
-        {
-          "id": "Application",
-          "label": "Application"
+          "id": "Advisor",
+          "label": "Advisor"
         },
         {
           "id": "Alerts",
           "label": "Alerts"
         },
         {
-          "id": "resource",
-          "label": "resource"
+          "id": "Application Insights",
+          "label": "Application Insights"
         },
         {
-          "id": "Insights",
-          "label": "Insights"
-        },
-        {
-          "id": "→",
-          "label": "→"
-        },
-        {
-          "id": "More services",
-          "label": "More services"
-        },
-        {
-          "id": "Azure AD",
-          "label": "Azure AD"
-        },
-        {
-          "id": "Advisor",
-          "label": "Advisor"
-        },
-        {
-          "id": "Security Center",
-          "label": "Security Center"
+          "id": "Azure AD Connect Health",
+          "label": "Azure AD Connect Health"
         },
         {
           "id": "Monitor",
           "label": "Monitor"
         },
         {
-          "id": "Connect Health",
-          "label": "Connect Health"
+          "id": "Policy",
+          "label": "Policy"
+        },
+        {
+          "id": "Security Center",
+          "label": "Security Center"
+        },
+        {
+          "id": "Subscriptions",
+          "label": "Subscriptions"
         }
       ],
       "correct": "Security Center"
@@ -890,10 +818,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Compliance Manager can be directly accessed from the",
-          "label": "Compliance Manager can be directly accessed from the"
-        },
         {
           "id": "Microsoft 365 admin center",
           "label": "Microsoft 365 admin center"
@@ -1067,10 +991,6 @@
       "type": "single",
       "options": [
         {
-          "id": "With Windows Hello for Business, a user's biometric data used for authentication",
-          "label": "With Windows Hello for Business, a user's biometric data used for authentication"
-        },
-        {
           "id": "is stored on an external device",
           "label": "is stored on an external device"
         },
@@ -1160,7 +1080,7 @@
     "id": 35,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "verification code sent to a mobile phone",
+    "answer": "Multi-factor authentication (MFA)",
     "explanation": "Multi-factor authentication is a process where a user is prompted during the sign-in process for an additional\nform of identification, such as to enter a code on their cellphone or to provide a fingerprint scan.\nReference:\nhttps://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-mfa-howitworks",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -1169,14 +1089,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "requires additional verification, such as a",
-          "label": "requires additional verification, such as a"
-        },
-        {
-          "id": "verification code sent to a mobile phone",
-          "label": "verification code sent to a mobile phone"
-        },
         {
           "id": "Multi-factor authentication (MFA)",
           "label": "Multi-factor authentication (MFA)"
@@ -1194,7 +1106,7 @@
           "label": "Single sign-on (SSO)"
         }
       ],
-      "correct": "verification code sent to a mobile phone"
+      "correct": "Multi-factor authentication (MFA)"
     }
   },
   {
@@ -1235,14 +1147,6 @@
       "type": "single",
       "options": [
         {
-          "id": "is a cloud-based solution that leverages on-premises Active Directory signals",
-          "label": "is a cloud-based solution that leverages on-premises Active Directory signals"
-        },
-        {
-          "id": "to identify, detect, and investigate advanced threats",
-          "label": "to identify, detect, and investigate advanced threats"
-        },
-        {
           "id": "Microsoft Defender for Cloud Apps",
           "label": "Microsoft Defender for Cloud Apps"
         },
@@ -1266,7 +1170,7 @@
     "id": 38,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "~ signals",
+    "answer": "on-premises Active Directory Domain Services (AD DS)",
     "explanation": "Microsoft Defender for Identity is a cloud-based security solution that leverages your on-premises Active\nDirectory signals to identify, detect, and investigate advanced threats, compromised identities, and malicious\ninsider actions directed at your organization.\nReference:\nhttps://docs.microsoft.com/en-us/defender-for-identity/what-is",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -1275,14 +1179,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Microsoft Defender for Identity can identify advanced threats from",
-          "label": "Microsoft Defender for Identity can identify advanced threats from"
-        },
-        {
-          "id": "~ signals",
-          "label": "~ signals"
-        },
         {
           "id": "Azure Active Directory (Azure AD)",
           "label": "Azure Active Directory (Azure AD)"
@@ -1296,14 +1192,14 @@
           "label": "on-premises Active Directory Domain Services (AD DS)"
         }
       ],
-      "correct": "~ signals"
+      "correct": "on-premises Active Directory Domain Services (AD DS)"
     }
   },
   {
     "id": 39,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Azure Active Directory (Azure AD) is",
+    "answer": "an identity provider",
     "explanation": "Azure Active Directory (Azure AD) is a cloud-based user identity and authentication service.\nReference:\nhttps://docs.microsoft.com/en-us/microsoft-365/enterprise/about-microsoft-365-identity?view=o365-\nworldwide",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -1313,16 +1209,8 @@
       "type": "single",
       "options": [
         {
-          "id": "Azure Active Directory (Azure AD) is",
-          "label": "Azure Active Directory (Azure AD) is"
-        },
-        {
-          "id": "an extended detection and response (DR) system",
-          "label": "an extended detection and response (DR) system"
-        },
-        {
-          "id": "used for authentication and authorization",
-          "label": "used for authentication and authorization"
+          "id": "an extended detection and response (XDR) system",
+          "label": "an extended detection and response (XDR) system"
         },
         {
           "id": "an identity provider",
@@ -1337,7 +1225,7 @@
           "label": "a security information and event management (SIEM) system"
         }
       ],
-      "correct": "Azure Active Directory (Azure AD) is"
+      "correct": "an identity provider"
     }
   },
   {
@@ -1595,10 +1483,6 @@
         {
           "id": "multi-factor authentication (MFA)",
           "label": "multi-factor authentication (MFA)"
-        },
-        {
-          "id": "will be enabled for all Azure AD users",
-          "label": "will be enabled for all Azure AD users"
         }
       ],
       "correct": "multi-factor authentication (MFA)"
@@ -1790,10 +1674,6 @@
       "type": "single",
       "options": [
         {
-          "id": "When using multi-factor authentication (MFA), a password is considered something you",
-          "label": "When using multi-factor authentication (MFA), a password is considered something you"
-        },
-        {
           "id": "are",
           "label": "are"
         },
@@ -1851,14 +1731,6 @@
       "type": "single",
       "options": [
         {
-          "id": "to access Azure services",
-          "label": "to access Azure services"
-        },
-        {
-          "id": "An Azure resource can use a system-assigned",
-          "label": "An Azure resource can use a system-assigned"
-        },
-        {
           "id": "Azure Active Directory (Azure AD) joined device",
           "label": "Azure Active Directory (Azure AD) joined device"
         },
@@ -1891,14 +1763,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "in the Microsoft 365 Defender portal to identify devices that are affected by an alert",
-          "label": "in the Microsoft 365 Defender portal to identify devices that are affected by an alert"
-        },
-        {
-          "id": "You can use",
-          "label": "You can use"
-        },
         {
           "id": "classifications",
           "label": "classifications"
@@ -1978,7 +1842,7 @@
           "correct": "Azure Firewall"
         },
         {
-          "label": "provides sectre and settles emote Desktop",
+          "label": "Provides secure and seamless Remote Desktop connectivity to Azure virtual machines",
           "options": [
             "Azure Bastion",
             "Azure Firewall",
@@ -1987,7 +1851,7 @@
           "correct": "Azure Bastion"
         },
         {
-          "label": "ovides traffic filtering that can be applied to speci",
+          "label": "Provides traffic filtering that can be applied to specific network interfaces on a virtual network",
           "options": [
             "Azure Bastion",
             "Azure Firewall",
@@ -2015,10 +1879,6 @@
         {
           "id": "Azure Advisor",
           "label": "Azure Advisor"
-        },
-        {
-          "id": "visibility, proactive hunting, and threat response",
-          "label": "visibility, proactive hunting, and threat response"
         },
         {
           "id": "Azure Bastion",
@@ -2073,10 +1933,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "You can use",
-          "label": "You can use"
-        },
         {
           "id": "Reports",
           "label": "Reports"
@@ -2209,7 +2065,7 @@
     "id": 66,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "workbooks",
+    "answer": "playbooks",
     "explanation": "Workbooks in Azure Sentinel are interactive dashboards that allow users to explore and analyze security data.\nThey provide a visual representation of security data, allowing users to quickly identify patterns and trends.\nWorkbooks can be customized to display specific data and can be shared with other users.\nPlaybooks in Azure Sentinel are automated response capabilities that allow users to take action on security\nincidents. They provide a set of predefined playbooks and actions to help users respond to security incidents\nquickly and effectively. Playbooks can be triggered by specific events or conditions, and can be customized to\nfit the needs of the organization. They also have the capability to integrate with other Azure services and\nthird-party tools, and can be used to automate incident triage, investigations, and remediation tasks.\n\nIn summary, Workbooks are for analysis and visualization of security data, whereas Playbooks are for\nautomated incident response.\nReference:\nhttps://docs.microsoft.com/en-us/azure/sentinel/overview",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -2218,10 +2074,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "In Microsoft Sentinel, you can automate common tasks by using",
-          "label": "In Microsoft Sentinel, you can automate common tasks by using"
-        },
         {
           "id": "deep investigation tools",
           "label": "deep investigation tools"
@@ -2239,7 +2091,7 @@
           "label": "workbooks"
         }
       ],
-      "correct": "workbooks"
+      "correct": "playbooks"
     }
   },
   {
@@ -2510,14 +2362,6 @@
       "type": "single",
       "options": [
         {
-          "id": "can use conditional access policies",
-          "label": "can use conditional access policies"
-        },
-        {
-          "id": "to control sessions in real time",
-          "label": "to control sessions in real time"
-        },
-        {
           "id": "Azure Active Directory (Azure AD) Privileged Identity Management (PIM)",
           "label": "Azure Active Directory (Azure AD) Privileged Identity Management (PIM)"
         },
@@ -2550,10 +2394,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Azure DDoS Protection Standard can be used to protect",
-          "label": "Azure DDoS Protection Standard can be used to protect"
-        },
         {
           "id": "Azure Active Directory (Azure AD) applications",
           "label": "Azure Active Directory (Azure AD) applications"
@@ -2727,10 +2567,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "In the Microsoft 365 Defender portal, an incident is a collection of correlated",
-          "label": "In the Microsoft 365 Defender portal, an incident is a collection of correlated"
-        },
         {
           "id": "alerts",
           "label": "alerts"
@@ -3076,10 +2912,6 @@
       "type": "single",
       "options": [
         {
-          "id": "information governance, and data loss prevention (DLP) policies",
-          "label": "information governance, and data loss prevention (DLP) policies"
-        },
-        {
           "id": "Azure Defender",
           "label": "Azure Defender"
         },
@@ -3145,14 +2977,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "can be used to provide Microsoft Support Engineers with access to an organization's data",
-          "label": "can be used to provide Microsoft Support Engineers with access to an organization's data"
-        },
-        {
-          "id": "stored in Microsoft Exchange Online, SharePoint Online, and OneDrive for Business",
-          "label": "stored in Microsoft Exchange Online, SharePoint Online, and OneDrive for Business"
-        },
         {
           "id": "Customer Lockbox",
           "label": "Customer Lockbox"
@@ -3427,14 +3251,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Compliance Manager assesses compliance data",
-          "label": "Compliance Manager assesses compliance data"
-        },
-        {
-          "id": "for an organization",
-          "label": "for an organization"
-        },
         {
           "id": "continually",
           "label": "continually"
@@ -3931,7 +3747,7 @@
     "id": 119,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "authentication",
+    "answer": "authorization",
     "explanation": "you can simply memorize:\nauthENTication = ENTER = can i go in?\nauthoRIzation = RIGHTS = where i can then go?",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -3940,10 +3756,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "• controls their level of access",
-          "label": "• controls their level of access"
-        },
         {
           "id": "administration",
           "label": "administration"
@@ -3961,7 +3773,7 @@
           "label": "authorization"
         }
       ],
-      "correct": "authentication"
+      "correct": "authorization"
     }
   },
   {
@@ -4016,12 +3828,8 @@
           "label": "A domain controller"
         },
         {
-          "id": "across multiple identity providers",
-          "label": "across multiple identity providers"
-        },
-        {
-          "id": "Active Directory Domain Services ADDS)",
-          "label": "Active Directory Domain Services ADDS)"
+          "id": "Active Directory Domain Services (AD DS)",
+          "label": "Active Directory Domain Services (AD DS)"
         },
         {
           "id": "Azure Active Directory (Azure AD) Privilege Identity Management (PIM)",
@@ -4048,10 +3856,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "should be the primary security perimeter",
-          "label": "should be the primary security perimeter"
-        },
         {
           "id": "the cloud",
           "label": "the cloud"
@@ -4152,28 +3956,16 @@
       "type": "single",
       "options": [
         {
-          "id": "system is a tool that collects data from",
-          "label": "system is a tool that collects data from"
-        },
-        {
-          "id": "multiple systems, identifies correlations or",
-          "label": "multiple systems, identifies correlations or"
-        },
-        {
           "id": "A security information and event management (SIEM)",
           "label": "A security information and event management (SIEM)"
-        },
-        {
-          "id": "anomalies, and generates alerts and incidents",
-          "label": "anomalies, and generates alerts and incidents"
         },
         {
           "id": "A security orchestration automated response (SOAR)",
           "label": "A security orchestration automated response (SOAR)"
         },
         {
-          "id": "A Trusted Automated eXchange of Indicator Information (TAXII",
-          "label": "A Trusted Automated eXchange of Indicator Information (TAXII"
+          "id": "A Trusted Automated eXchange of Indicator Information (TAXII)",
+          "label": "A Trusted Automated eXchange of Indicator Information (TAXII)"
         },
         {
           "id": "An attack surface reduction (ASR)",
@@ -4197,20 +3989,8 @@
       "type": "single",
       "options": [
         {
-          "id": "use Azure Logic Apps to automate",
-          "label": "use Azure Logic Apps to automate"
-        },
-        {
-          "id": "Microsoft Sentinel",
-          "label": "Microsoft Sentinel"
-        },
-        {
           "id": "analytic rules",
           "label": "analytic rules"
-        },
-        {
-          "id": "and orchestrate responses to alerts",
-          "label": "and orchestrate responses to alerts"
         },
         {
           "id": "hunting queries",
@@ -4417,10 +4197,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "verifies their credentials to prove their identity",
-          "label": "verifies their credentials to prove their identity"
-        },
         {
           "id": "administration",
           "label": "administration"
@@ -4773,14 +4549,6 @@
       "type": "single",
       "options": [
         {
-          "id": "is a cloud service for storing",
-          "label": "is a cloud service for storing"
-        },
-        {
-          "id": "application secrets",
-          "label": "application secrets"
-        },
-        {
           "id": "Azure Active Directory (Azure AD) Password Protection",
           "label": "Azure Active Directory (Azure AD) Password Protection"
         },
@@ -4789,8 +4557,8 @@
           "label": "Azure Bastion"
         },
         {
-          "id": "Azure Information Protection (AlP)",
-          "label": "Azure Information Protection (AlP)"
+          "id": "Azure Information Protection (AIP)",
+          "label": "Azure Information Protection (AIP)"
         },
         {
           "id": "Azure Key Vault",
@@ -4813,10 +4581,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "and hybrid cloud resources",
-          "label": "and hybrid cloud resources"
-        },
         {
           "id": "Microsoft Defender for Cloud",
           "label": "Microsoft Defender for Cloud"
@@ -4920,10 +4684,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Microsoft Sentinel provides quick insights into data by using",
-          "label": "Microsoft Sentinel provides quick insights into data by using"
-        },
         {
           "id": "Azure Logic Apps",
           "label": "Azure Logic Apps"
@@ -5048,10 +4808,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Insider risk management is configured from the",
-          "label": "Insider risk management is configured from the"
-        },
         {
           "id": "Microsoft 365 admin center",
           "label": "Microsoft 365 admin center"
@@ -5216,20 +4972,12 @@
       "type": "single",
       "options": [
         {
-          "id": "measures a company's progress in completing actions that help reduce risks",
-          "label": "measures a company's progress in completing actions that help reduce risks"
-        },
-        {
           "id": "Compliance score",
           "label": "Compliance score"
         },
         {
-          "id": "around data protection and regulatory standards",
-          "label": "around data protection and regulatory standards"
-        },
-        {
-          "id": "Microsoft Purview compliance portal reports",
-          "label": "Microsoft Purview compliance portal reports"
+          "id": "Microsoft 365 compliance center reports",
+          "label": "Microsoft 365 compliance center reports"
         },
         {
           "id": "The Trust Center",
@@ -5338,10 +5086,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "track compliance with groupings of controls from a specific regulation or requirement",
-          "label": "track compliance with groupings of controls from a specific regulation or requirement"
-        },
         {
           "id": "Assessments",
           "label": "Assessments"
@@ -5614,14 +5358,6 @@
       "type": "single",
       "options": [
         {
-          "id": "The",
-          "label": "The"
-        },
-        {
-          "id": "while reducing the network attack surface on Azure virtual machines",
-          "label": "while reducing the network attack surface on Azure virtual machines"
-        },
-        {
           "id": "access and application control",
           "label": "access and application control"
         },
@@ -5670,7 +5406,7 @@
     "id": 172,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Federation",
+    "answer": "federation",
     "explanation": "https://learn.microsoft.com/en-us/azure/active-directory/hybrid/connect/whatis-fed",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -5680,12 +5416,8 @@
       "type": "single",
       "options": [
         {
-          "id": "Single sign-on (SSO) configured between multiple identity providers is an example of",
-          "label": "Single sign-on (SSO) configured between multiple identity providers is an example of"
-        },
-        {
-          "id": "Federation",
-          "label": "Federation"
+          "id": "federation",
+          "label": "federation"
         },
         {
           "id": "integration",
@@ -5700,7 +5432,7 @@
           "label": "pass-through authentication"
         }
       ],
-      "correct": "Federation"
+      "correct": "federation"
     }
   },
   {
@@ -5745,10 +5477,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Enabling a system-assigned managed identity creates a service principal that",
-          "label": "Enabling a system-assigned managed identity creates a service principal that"
-        },
         {
           "id": "can be shared with multiple Azure resources",
           "label": "can be shared with multiple Azure resources"
@@ -5854,7 +5582,7 @@
     "id": 178,
     "kind": "fields",
     "prompt": "You need to identify which cloud service models place the most responsibility on the customer in a shared responsibility model. In which order should you list the service models from the most customer responsibility to the least? To answer, move all models from the list of models to the answer area and arrange them in the correct order",
-    "answer": "on-premises datacenter; infrastructure as a service (laaS); platform as a service (PaaS); software as a service (Saas)",
+    "answer": "on-premises datacenter; infrastructure as a service (IaaS); platform as a service (PaaS); software as a service (SaaS)",
     "explanation": "https://learn.microsoft.com/en-us/azure/security/fundamentals/shared-responsibility",
     "sourceType": "drag-drop",
     "sourceImages": [
@@ -5867,9 +5595,9 @@
           "label": "Position 1",
           "options": [
             "on-premises datacenter",
-            "infrastructure as a service (laaS)",
+            "infrastructure as a service (IaaS)",
             "platform as a service (PaaS)",
-            "software as a service (Saas)"
+            "software as a service (SaaS)"
           ],
           "correct": "on-premises datacenter"
         },
@@ -5877,19 +5605,19 @@
           "label": "Position 2",
           "options": [
             "on-premises datacenter",
-            "infrastructure as a service (laaS)",
+            "infrastructure as a service (IaaS)",
             "platform as a service (PaaS)",
-            "software as a service (Saas)"
+            "software as a service (SaaS)"
           ],
-          "correct": "infrastructure as a service (laaS)"
+          "correct": "infrastructure as a service (IaaS)"
         },
         {
           "label": "Position 3",
           "options": [
             "on-premises datacenter",
-            "infrastructure as a service (laaS)",
+            "infrastructure as a service (IaaS)",
             "platform as a service (PaaS)",
-            "software as a service (Saas)"
+            "software as a service (SaaS)"
           ],
           "correct": "platform as a service (PaaS)"
         },
@@ -5897,11 +5625,11 @@
           "label": "Position 4",
           "options": [
             "on-premises datacenter",
-            "infrastructure as a service (laaS)",
+            "infrastructure as a service (IaaS)",
             "platform as a service (PaaS)",
-            "software as a service (Saas)"
+            "software as a service (SaaS)"
           ],
-          "correct": "software as a service (Saas)"
+          "correct": "software as a service (SaaS)"
         }
       ]
     }
@@ -5919,14 +5647,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "to an Azure AD role",
-          "label": "to an Azure AD role"
-        },
-        {
-          "id": "You can assign",
-          "label": "You can assign"
-        },
         {
           "id": "a management group",
           "label": "a management group"
@@ -6142,14 +5862,6 @@
       "type": "single",
       "options": [
         {
-          "id": "In the Microsoft Purview compliance portal, you can use",
-          "label": "In the Microsoft Purview compliance portal, you can use"
-        },
-        {
-          "id": "to remove features from the navigation pane",
-          "label": "to remove features from the navigation pane"
-        },
-        {
           "id": "Compliance Manager",
           "label": "Compliance Manager"
         },
@@ -6197,7 +5909,7 @@
     "id": 188,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "object",
+    "answer": "access",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -6206,18 +5918,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "You can use dynamic groups in Azure AD to automate the",
-          "label": "You can use dynamic groups in Azure AD to automate the"
-        },
-        {
-          "id": "lifecycle process",
-          "label": "lifecycle process"
-        },
-        {
-          "id": "You can use dynamic groups in Azure AD to automate the objec",
-          "label": "You can use dynamic groups in Azure AD to automate the objec"
-        },
         {
           "id": "access",
           "label": "access"
@@ -6231,7 +5931,7 @@
           "label": "privileged access"
         }
       ],
-      "correct": "object"
+      "correct": "access"
     }
   },
   {
@@ -6281,14 +5981,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Microsoft Defender for Cloud assesses Azure resources",
-          "label": "Microsoft Defender for Cloud assesses Azure resources"
-        },
-        {
-          "id": "for security issues",
-          "label": "for security issues"
-        },
         {
           "id": "continuously",
           "label": "continuously"
@@ -6379,14 +6071,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "first-factor authentication",
-          "label": "first-factor authentication"
-        },
-        {
-          "id": "Conditional Access policies are enforced",
-          "label": "Conditional Access policies are enforced"
-        },
         {
           "id": "after",
           "label": "after"
@@ -6571,7 +6255,7 @@
     "id": 199,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Microsoft Entra Permissions Management is",
+    "answer": "a cloud infrastructure entitlement management (CIEM) solution",
     "explanation": "Microsoft Entra Permissions Management is a cloud infrastructure entitlement management (CIEM) solution\nthat provides comprehensive visibility into permissions assigned to all identities (users and workloads),\nactions, and resources across cloud infrastructures.\n\" https://learn.microsoft.com/en-us/entra/permissions-management/",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -6581,27 +6265,23 @@
       "type": "single",
       "options": [
         {
-          "id": "Microsoft Entra Permissions Management is",
-          "label": "Microsoft Entra Permissions Management is"
-        },
-        {
           "id": "a cloud infrastructure entitlement management (CIEM) solution",
           "label": "a cloud infrastructure entitlement management (CIEM) solution"
         },
         {
-          "id": "a cloud security posture management (SPM) solution",
-          "label": "a cloud security posture management (SPM) solution"
+          "id": "a cloud security posture management (CSPM) solution",
+          "label": "a cloud security posture management (CSPM) solution"
         },
         {
           "id": "a security information and event management (SIEM) solution",
           "label": "a security information and event management (SIEM) solution"
         },
         {
-          "id": "an extended detection and response (DR) solution",
-          "label": "an extended detection and response (DR) solution"
+          "id": "an extended detection and response (XDR) solution",
+          "label": "an extended detection and response (XDR) solution"
         }
       ],
-      "correct": "Microsoft Entra Permissions Management is"
+      "correct": "a cloud infrastructure entitlement management (CIEM) solution"
     }
   },
   {
@@ -6708,14 +6388,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "the default security rules of a network security group (NSG)",
-          "label": "the default security rules of a network security group (NSG)"
-        },
-        {
-          "id": "You can",
-          "label": "You can"
-        },
         {
           "id": "copy",
           "label": "copy"
@@ -6859,7 +6531,7 @@
     "id": 208,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Microsoft provides the",
+    "answer": "Microsoft Service Trust Portal",
     "explanation": "Microsoft provides the Microsoft Service Trust Portal as a public site for publishing audit reports and other\ncompliance-related information associated with Microsoft cloud services.\nReference:\nhttps://learn.microsoft.com/en-us/purview/get-started-with-service-trust-portal",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -6870,24 +6542,12 @@
       "type": "single",
       "options": [
         {
-          "id": "as a public site for publishing audit reports and",
-          "label": "as a public site for publishing audit reports and"
-        },
-        {
-          "id": "Microsoft provides the",
-          "label": "Microsoft provides the"
-        },
-        {
-          "id": "other compliance-related information associated",
-          "label": "other compliance-related information associated"
-        },
-        {
           "id": "Azure EA portal",
           "label": "Azure EA portal"
         },
         {
-          "id": "Microsoft Purview compliance portal with Microsoft cloud services",
-          "label": "Microsoft Purview compliance portal with Microsoft cloud services"
+          "id": "Microsoft Purview compliance portal",
+          "label": "Microsoft Purview compliance portal"
         },
         {
           "id": "Microsoft Purview governance portal",
@@ -6898,7 +6558,7 @@
           "label": "Microsoft Service Trust Portal"
         }
       ],
-      "correct": "Microsoft provides the"
+      "correct": "Microsoft Service Trust Portal"
     }
   },
   {
@@ -7007,24 +6667,8 @@
       "type": "single",
       "options": [
         {
-          "id": "How to create a virtual network is part of the",
-          "label": "How to create a virtual network is part of the"
-        },
-        {
-          "id": "information in the Microsoft",
-          "label": "information in the Microsoft"
-        },
-        {
-          "id": "cloud security benchmark",
-          "label": "cloud security benchmark"
-        },
-        {
           "id": "Azure Guidance",
           "label": "Azure Guidance"
-        },
-        {
-          "id": "(MCSB)",
-          "label": "(MCSB)"
         },
         {
           "id": "mapping to industry frameworks",
@@ -7219,14 +6863,6 @@
       "type": "single",
       "options": [
         {
-          "id": "Using your company credentials to access a partner company's resources requires a",
-          "label": "Using your company credentials to access a partner company's resources requires a"
-        },
-        {
-          "id": "solution between the two companies",
-          "label": "solution between the two companies"
-        },
-        {
           "id": "federation",
           "label": "federation"
         },
@@ -7300,14 +6936,6 @@
       "type": "single",
       "options": [
         {
-          "id": "Microsoft Sentinel uses",
-          "label": "Microsoft Sentinel uses"
-        },
-        {
-          "id": "to correlate alerts into incidents",
-          "label": "to correlate alerts into incidents"
-        },
-        {
           "id": "analytics",
           "label": "analytics"
         },
@@ -7373,14 +7001,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Microsoft Purview eDiscovery (Standard) builds on the basic search and export",
-          "label": "Microsoft Purview eDiscovery (Standard) builds on the basic search and export"
-        },
-        {
-          "id": "functionality of Content search by enabling you to",
-          "label": "functionality of Content search by enabling you to"
-        },
         {
           "id": "collect and copy data into review sets",
           "label": "collect and copy data into review sets"
@@ -7481,10 +7101,6 @@
       "type": "single",
       "options": [
         {
-          "id": "Microsoft Defender for Cloud plans can be enabled from the",
-          "label": "Microsoft Defender for Cloud plans can be enabled from the"
-        },
-        {
           "id": "Azure portal",
           "label": "Azure portal"
         },
@@ -7517,10 +7133,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "can be accessed from the Entra Permissions Management portal",
-          "label": "can be accessed from the Entra Permissions Management portal"
-        },
         {
           "id": "Microsoft Secure Score",
           "label": "Microsoft Secure Score"
@@ -7612,10 +7224,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "Vulnerability articles from Microsoft Defender Threat Intelligence (Defender Tl) include",
-          "label": "Vulnerability articles from Microsoft Defender Threat Intelligence (Defender Tl) include"
-        },
         {
           "id": "a priority score",
           "label": "a priority score"
@@ -7771,7 +7379,7 @@
     "id": 234,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Azure Bastion hosts",
+    "answer": "Virtual networks",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -7780,10 +7388,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "provide network segmentation in Azure",
-          "label": "provide network segmentation in Azure"
-        },
         {
           "id": "Azure Bastion hosts",
           "label": "Azure Bastion hosts"
@@ -7801,7 +7405,7 @@
           "label": "Virtual networks"
         }
       ],
-      "correct": "Azure Bastion hosts"
+      "correct": "Virtual networks"
     }
   },
   {
@@ -7817,10 +7421,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "can perform analytics by using Python machine learning",
-          "label": "can perform analytics by using Python machine learning"
-        },
         {
           "id": "data connectors",
           "label": "data connectors"
@@ -7911,7 +7511,7 @@
     "id": 238,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "discretionary",
+    "answer": "detective",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -7920,10 +7520,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "• actions include system access audits and regulatory compliance audits",
-          "label": "• actions include system access audits and regulatory compliance audits"
-        },
         {
           "id": "corrective",
           "label": "corrective"
@@ -7941,7 +7537,7 @@
           "label": "preventative"
         }
       ],
-      "correct": "discretionary"
+      "correct": "detective"
     }
   },
   {
@@ -8005,7 +7601,7 @@
     "id": 241,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Azure Logic Apps",
+    "answer": "Microsoft Entra ID Identity Governance",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -8014,18 +7610,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "to create workflows that run automatically",
-          "label": "to create workflows that run automatically"
-        },
-        {
-          "id": "You can use",
-          "label": "You can use"
-        },
-        {
-          "id": "when a user account is created or disabled",
-          "label": "when a user account is created or disabled"
-        },
         {
           "id": "Azure Logic Apps",
           "label": "Azure Logic Apps"
@@ -8043,7 +7627,7 @@
           "label": "Microsoft Entra ID Protection"
         }
       ],
-      "correct": "Azure Logic Apps"
+      "correct": "Microsoft Entra ID Identity Governance"
     }
   },
   {
@@ -8091,7 +7675,7 @@
     "id": 243,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "Active Directory Domain Services (AD DS)",
+    "answer": "Microsoft Entra B2B collaboration",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -8100,14 +7684,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "enables collaboration with business partners from external organizations",
-          "label": "enables collaboration with business partners from external organizations"
-        },
-        {
-          "id": "appear as guest users in the directory",
-          "label": "appear as guest users in the directory"
-        },
         {
           "id": "Active Directory Domain Services (AD DS)",
           "label": "Active Directory Domain Services (AD DS)"
@@ -8125,7 +7701,7 @@
           "label": "Microsoft Entra B2B collaboration"
         }
       ],
-      "correct": "Active Directory Domain Services (AD DS)"
+      "correct": "Microsoft Entra B2B collaboration"
     }
   },
   {
@@ -8223,7 +7799,7 @@
     "id": 247,
     "kind": "single",
     "prompt": "Select the answer that correctly completes the sentence",
-    "answer": "hunting",
+    "answer": "analytics",
     "explanation": "No explanation was printed in the source PDF.",
     "sourceType": "hotspot",
     "sourceImages": [
@@ -8232,14 +7808,6 @@
     "interaction": {
       "type": "single",
       "options": [
-        {
-          "id": "to correlate alerts into incidents automatically",
-          "label": "to correlate alerts into incidents automatically"
-        },
-        {
-          "id": "Microsoft Sentinel uses",
-          "label": "Microsoft Sentinel uses"
-        },
         {
           "id": "analytics",
           "label": "analytics"
@@ -8257,7 +7825,7 @@
           "label": "playbooks"
         }
       ],
-      "correct": "hunting"
+      "correct": "analytics"
     }
   },
   {
@@ -8275,24 +7843,20 @@
       "type": "single",
       "options": [
         {
-          "id": "A security information and event management (SIEM) solution",
-          "label": "A security information and event management (SIEM) solution"
-        },
-        {
           "id": "detects suspicious activities and attacks across hosts, networks, and users",
           "label": "detects suspicious activities and attacks across hosts, networks, and users"
         },
         {
-          "id": "analyze the data, and deliver security insights",
-          "label": "analyze the data, and deliver security insights"
-        },
-        {
-          "id": "for the investigation and mitigation of detected threats",
-          "label": "for the investigation and mitigation of detected threats"
-        },
-        {
           "id": "provides the ability to collect security data from an entire estate, analyze the data, and deliver security insights",
           "label": "provides the ability to collect security data from an entire estate, analyze the data, and deliver security insights"
+        },
+        {
+          "id": "provides the ability to raise alerts and incidents and trigger automated workflows for the investigation and mitigation of detected threats",
+          "label": "provides the ability to raise alerts and incidents and trigger automated workflows for the investigation and mitigation of detected threats"
+        },
+        {
+          "id": "provides the ability to orchestrate, investigate, and mitigate security threats",
+          "label": "provides the ability to orchestrate, investigate, and mitigate security threats"
         }
       ],
       "correct": "provides the ability to collect security data from an entire estate, analyze the data, and deliver security insights"
@@ -8405,14 +7969,6 @@
       "type": "single",
       "options": [
         {
-          "id": "I can be configured to mark an item as a regulatory record",
-          "label": "I can be configured to mark an item as a regulatory record"
-        },
-        {
-          "id": "A",
-          "label": "A"
-        },
-        {
           "id": "data loss prevention (DLP) policy",
           "label": "data loss prevention (DLP) policy"
         },
@@ -8436,7 +7992,7 @@
     "id": 253,
     "kind": "single",
     "prompt": "In the Microsoft Purview compliance score, actions include system access audits and regulatory compliance _",
-    "answer": "D",
+    "answer": "B",
     "explanation": "A. corrective ❌ Incorrect\nCorrective actions are used to fix issues after they occur, not for auditing or compliance monitoring activities.\nB. detective ❌ Incorrect\nDetective actions are for identifying issues, but this option is not the best fit for how Microsoft Purview\nclassifies these controls in the compliance score context.\nC. discretionary ❌ Incorrect\nDiscretionary is not a valid control category in Microsoft Purview compliance score.\nD. preventative ✅ Correct\nPreventative actions are designed to reduce risk and ensure compliance before issues occur, including\ncontrols like system access configurations and regulatory compliance measures that help prevent\nviolations.",
     "sourceType": "choice",
     "sourceImages": [
@@ -8462,7 +8018,7 @@
           "label": "preventative"
         }
       ],
-      "correct": "D"
+      "correct": "B"
     }
   },
   {
