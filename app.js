@@ -8,9 +8,10 @@ const app = document.querySelector("#app");
 
 const state = {
   exam: "ab",
+  rawBanks: {},
   banks: {},
   bank: [],
-  mode: "custom",        // "all" | "custom" | "wrongs-smart" | "wrongs-all" | "should-check"
+  mode: "custom",        // "all" | "custom" | "wrongs-smart" | "wrongs-all" | "should-check" | "memorise" | "real-deal"
   customCount: 0,        // set during bootstrap to halfCount()
   wrongs: { smart: new Set(), all: new Set() },
   flags: new Set(),      // persistently flagged question IDs
@@ -28,7 +29,18 @@ const state = {
   questionTimes: {},     // { questionId: totalSeconds } accumulated per question
   questionEnteredAt: 0,  // Date.now() when current question was entered
   submitting: false,
-  view: "home",          // "home" | "quiz" | "results" | "stats"
+  view: "home",          // "home" | "quiz" | "results" | "stats" | "memorise"
+  realDealCount: 40,
+  realDealPartialCredit: true,
+  categoryFilter: "All",
+  questionEdits: {},
+  memorise: {
+    queue: [],           // shuffled question objects still to drill
+    mastered: new Set(), // question IDs answered correctly
+    attempts: {},        // { questionId: attemptCount }
+    totalInSession: 0,   // initial queue size
+    revealed: false,     // whether the current card's answer is revealed
+  },
 };
 
 let activeQuizKeyHandler = null;
@@ -45,6 +57,12 @@ const EXAMS = {
     mark: "AZ",
     subtitle: "Microsoft Azure Fundamentals",
     file: "az-diff-questions.json",
+  },
+  ai: {
+    code: "AI-901",
+    mark: "AI",
+    subtitle: "Microsoft Azure AI Fundamentals",
+    file: "ai-questions.json",
   },
   sc: {
     code: "SC-900",
@@ -130,7 +148,126 @@ function getShouldCheckIds() {
   return ids;
 }
 
+// ─── Real Deal domain mapping (SC-900) ───────────────────────────────────────
+
+const REAL_DEAL_DOMAINS = [
+  {
+    name: "Concepts of security, compliance, and identity",
+    weight: 0.125,  // midpoint of 10–15%
+    categories: ["General Security & Governance"],
+  },
+  {
+    name: "Capabilities of Microsoft Entra",
+    weight: 0.275,  // midpoint of 25–30%
+    categories: ["Identity & Access"],
+  },
+  {
+    name: "Capabilities of Microsoft security solutions",
+    weight: 0.375,  // midpoint of 35–40%
+    categories: ["Microsoft Defender", "Microsoft Sentinel", "Cloud Security & Network"],
+  },
+  {
+    name: "Capabilities of Microsoft compliance solutions",
+    weight: 0.225,  // midpoint of 20–25%
+    categories: ["Microsoft Purview"],
+  },
+];
+
+function selectWeightedQuestions(bank, totalCount) {
+  const selected = [];
+  const remaining = [...bank];
+
+  for (const domain of REAL_DEAL_DOMAINS) {
+    const domainQuestions = remaining.filter(
+      (q) => domain.categories.includes(q.category),
+    );
+    const count = Math.round(totalCount * domain.weight);
+    const picked = shuffle(domainQuestions).slice(0, count);
+    selected.push(...picked);
+    // Remove picked questions from remaining pool to avoid duplicates
+    const pickedIds = new Set(picked.map((q) => q.id));
+    for (let i = remaining.length - 1; i >= 0; i--) {
+      if (pickedIds.has(remaining[i].id)) remaining.splice(i, 1);
+    }
+  }
+
+  // If rounding left us short, fill from remaining pool
+  while (selected.length < totalCount && remaining.length > 0) {
+    const idx = Math.floor(Math.random() * remaining.length);
+    selected.push(remaining.splice(idx, 1)[0]);
+  }
+
+  return shuffle(selected.slice(0, totalCount));
+}
+
+function getPartialScore(question) {
+  const interaction = question.interaction;
+  const actual = state.answers[question.id];
+  if (interaction.type === "matrix") {
+    if (!Array.isArray(actual)) return 0;
+    let correct = 0;
+    for (let i = 0; i < interaction.correct.length; i++) {
+      if (normalize(actual[i]) === normalize(interaction.correct[i])) correct++;
+    }
+    return correct / interaction.correct.length;
+  }
+  if (interaction.type === "fields") {
+    if (!Array.isArray(actual)) return 0;
+    let correct = 0;
+    for (let i = 0; i < interaction.fields.length; i++) {
+      if (normalize(actual[i]) === normalize(interaction.fields[i].correct)) correct++;
+    }
+    return correct / interaction.fields.length;
+  }
+  // Single / multi — binary
+  return isCorrect(question) ? 1 : 0;
+}
+
+function getQuestionDomain(question) {
+  for (const domain of REAL_DEAL_DOMAINS) {
+    if (domain.categories.includes(question.category)) return domain.name;
+  }
+  return "Other";
+}
+
 // ─── Utilities ───────────────────────────────────────────────────────────────
+
+function refreshBank() {
+  const fullBank = state.banks[state.exam];
+  if (state.categoryFilter === "All") {
+    state.bank = fullBank;
+  } else {
+    state.bank = fullBank.filter((q) => q.category === state.categoryFilter);
+  }
+}
+
+function applyQuestionEdits(rawBanks, edits) {
+  const output = {};
+  for (const [exam, questions] of Object.entries(rawBanks)) {
+    const examEdits = edits[exam] || {};
+    output[exam] = questions
+      .map((question) => {
+        const edit = examEdits[String(question.id)];
+        if (!edit) return question;
+        if (edit.deleted) return null;
+        return edit.question ? edit.question : question;
+      })
+      .filter(Boolean)
+      .sort((a, b) => Number(a.id) - Number(b.id));
+  }
+  return output;
+}
+
+async function reloadEditedBanks() {
+  state.questionEdits = await loadQuestionEdits();
+  state.banks = applyQuestionEdits(state.rawBanks, state.questionEdits);
+  refreshBank();
+}
+
+
+function explanationParagraphs(text) {
+  return text.split("\n").filter(Boolean).map(function(p) { return "<p>" + escapeHtml(p) + "</p>"; }).join("");
+}
 
 const escapeHtml = (value = "") =>
   String(value)
@@ -494,8 +631,15 @@ function updateHeaderUser(user) {
   headerMeta.innerHTML = `
     <span class="status-dot"></span>
     <span class="header-username">${escapeHtml(displayName)}</span>
+    ${isCurrentUserAdmin() ? '<button class="header-admin" type="button" id="header-admin-btn" title="Admin dashboard">Admin</button>' : ""}
     <button class="header-logout" type="button" id="header-logout-btn" title="Sign out">Sign out</button>
   `;
+  const adminBtn = document.getElementById("header-admin-btn");
+  if (adminBtn) {
+    adminBtn.addEventListener("click", () => {
+      renderAdminDashboard();
+    });
+  }
   const logoutBtn = document.getElementById("header-logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -569,6 +713,19 @@ function renderHome() {
       <aside class="mode-panel">
         <h2>Choose your run</h2>
         <p>Pick a mode, then hit start.</p>
+        ${state.exam === "sc" ? `
+          <div class="category-filter-row">
+            <select id="category-select" class="category-select" aria-label="Filter by category">
+              <option value="All" ${state.categoryFilter === "All" ? "selected" : ""}>All Services</option>
+              <option value="Identity & Access" ${state.categoryFilter === "Identity & Access" ? "selected" : ""}>Identity & Access</option>
+              <option value="Microsoft Purview" ${state.categoryFilter === "Microsoft Purview" ? "selected" : ""}>Microsoft Purview</option>
+              <option value="Microsoft Defender" ${state.categoryFilter === "Microsoft Defender" ? "selected" : ""}>Microsoft Defender</option>
+              <option value="Cloud Security & Network" ${state.categoryFilter === "Cloud Security & Network" ? "selected" : ""}>Cloud Security & Network</option>
+              <option value="Microsoft Sentinel" ${state.categoryFilter === "Microsoft Sentinel" ? "selected" : ""}>Microsoft Sentinel</option>
+              <option value="General Security & Governance" ${state.categoryFilter === "General Security & Governance" ? "selected" : ""}>General Security & Governance</option>
+            </select>
+          </div>
+        ` : ""}
         <div class="mode-grid">
           <button class="mode-card ${state.mode === "all" ? "selected" : ""}" type="button" data-mode="all">
             <span class="mode-icon">${total}</span>
@@ -652,6 +809,44 @@ function renderHome() {
             </span>
             <span class="mode-count ${hasShouldCheck ? "mode-count--check" : ""}">${hasShouldCheck ? `${shouldCheckCount} Q` : "–"}</span>
           </button>
+          <button class="mode-card ${state.mode === "memorise" ? "selected" : ""}" type="button" data-mode="memorise">
+            <span class="mode-icon mode-icon--memorise">🧠</span>
+            <span>
+              <strong>Memorise</strong>
+              <small>Drill every question until you recall the answer. Wrong answers come back.</small>
+            </span>
+            <span class="mode-count">${total} Q</span>
+          </button>
+          ${state.exam === "sc" ? `
+          <button class="mode-card ${state.mode === "real-deal" ? "selected" : ""}" type="button" data-mode="real-deal">
+            <span class="mode-icon mode-icon--real-deal">🎯</span>
+            <span>
+              <strong>Real Deal</strong>
+              <small>Weighted domain proportions matching the real SC-900 exam.</small>
+            </span>
+            <span class="mode-count mode-count--real-deal" id="real-deal-count-badge">${state.realDealCount} Q</span>
+          </button>
+          <div class="real-deal-controls ${state.mode === "real-deal" ? "visible" : ""}" id="real-deal-controls">
+            <div class="real-deal-slider-row">
+              <input
+                type="range"
+                class="custom-slider"
+                id="real-deal-slider"
+                min="10"
+                max="60"
+                value="${state.realDealCount}"
+                aria-label="Number of questions"
+              />
+              <span class="custom-slider-value" id="real-deal-slider-value">${state.realDealCount}</span>
+              <button class="real-deal-random-btn" type="button" id="real-deal-random">🎲 Random</button>
+            </div>
+            <label class="real-deal-partial-toggle">
+              <input type="checkbox" id="real-deal-partial-checkbox" ${state.realDealPartialCredit ? "checked" : ""} />
+              <span>Partial credit for Yes/No questions</span>
+              <small>Get points for each correct row instead of all-or-nothing</small>
+            </label>
+          </div>
+          ` : ""}
         </div>
         <label class="timer-toggle" id="timer-toggle">
           <input type="checkbox" id="timer-checkbox" ${state.timerEnabled ? "checked" : ""} />
@@ -718,7 +913,8 @@ function renderHome() {
       if (button.dataset.exam === state.exam) return;
       const selectedExam = button.dataset.exam;
       state.exam = selectedExam;
-      state.bank = state.banks[state.exam];
+      state.categoryFilter = "All";
+      refreshBank();
       state.mode = "custom";
       state.customCount = halfCount();
       const wrongs = await loadWrongQuestionIds(selectedExam);
@@ -740,9 +936,54 @@ function renderHome() {
         .forEach((card) => card.classList.toggle("selected", card === button));
       // Show/hide slider row
       const sliderRow = document.getElementById("custom-slider-row");
-      if (sliderRow) sliderRow.classList.toggle("visible", state.mode === "custom");
+      sliderRow.classList.toggle("visible", state.mode === "custom");
+      // Show/hide real-deal controls
+      const realDealRow = document.getElementById("real-deal-controls");
+      if (realDealRow) realDealRow.classList.toggle("visible", state.mode === "real-deal");
     });
   });
+
+  // Category filter
+  const categorySelect = app.querySelector("#category-select");
+  if (categorySelect) {
+    categorySelect.addEventListener("change", () => {
+      state.categoryFilter = categorySelect.value;
+      refreshBank();
+      state.mode = "all"; // Reset mode to 'all' to avoid custom mode bounds issues
+      state.customCount = halfCount();
+      renderHome();
+    });
+  }
+
+  // Real Deal controls
+  const realDealSlider = document.getElementById("real-deal-slider");
+  if (realDealSlider) {
+    realDealSlider.addEventListener("input", () => {
+      state.realDealCount = Number(realDealSlider.value);
+      const valueLabel = document.getElementById("real-deal-slider-value");
+      if (valueLabel) valueLabel.textContent = state.realDealCount;
+      const badge = document.getElementById("real-deal-count-badge");
+      if (badge) badge.textContent = state.realDealCount + " Q";
+    });
+  }
+  const realDealRandomBtn = document.getElementById("real-deal-random");
+  if (realDealRandomBtn) {
+    realDealRandomBtn.addEventListener("click", () => {
+      const randomCount = 30 + Math.floor(Math.random() * 31); // 30–60
+      state.realDealCount = randomCount;
+      if (realDealSlider) realDealSlider.value = randomCount;
+      const valueLabel = document.getElementById("real-deal-slider-value");
+      if (valueLabel) valueLabel.textContent = randomCount;
+      const badge = document.getElementById("real-deal-count-badge");
+      if (badge) badge.textContent = randomCount + " Q";
+    });
+  }
+  const partialCreditCheckbox = document.getElementById("real-deal-partial-checkbox");
+  if (partialCreditCheckbox) {
+    partialCreditCheckbox.addEventListener("change", () => {
+      state.realDealPartialCredit = partialCreditCheckbox.checked;
+    });
+  }
 
   // Timer toggle
   const timerCheckbox = document.getElementById("timer-checkbox");
@@ -835,6 +1076,12 @@ function startTest() {
     const checkIds = getShouldCheckIds();
     const checkBank = state.bank.filter((q) => checkIds.has(q.id));
     state.questions = shuffle(checkBank);
+  } else if (state.mode === "memorise") {
+    state.questions = shuffle([...state.bank]);
+  } else if (state.mode === "real-deal") {
+    // Use the FULL sc bank (ignore category filter) for weighted selection
+    const fullBank = state.banks[state.exam];
+    state.questions = selectWeightedQuestions(fullBank, state.realDealCount);
   }
 
   // Shuffle answer choices for every question so users can't memorise positions
@@ -843,6 +1090,26 @@ function startTest() {
     window.alert("No matching questions are available for this mode yet.");
     state.mode = "custom";
     renderHome();
+    return;
+  }
+
+  // ── Memorise mode uses its own flow ──
+  if (state.mode === "memorise") {
+    state.memorise = {
+      allQuestions: [...state.questions],
+      queue: state.questions.slice(0, 40),
+      mastered: new Set(),
+      attempts: {},
+      batchSize: 40,
+      currentBatchIndex: 0,
+      totalBatches: Math.ceil(state.questions.length / 40),
+      totalInSession: state.questions.length,
+      revealed: false,
+    };
+    state.current = 0;
+    state.answers = {};
+    state.view = "memorise";
+    renderMemoriseCard();
     return;
   }
 
@@ -1239,6 +1506,9 @@ function renderQuiz({ scrollToTop = true } = {}) {
             <button class="bookmark-btn ${state.bookmarks.has(state.current) ? "active" : ""}" id="bookmark-btn" type="button" aria-label="Bookmark question">
               ${state.bookmarks.has(state.current) ? "★ Bookmarked" : "☆ Bookmark"}
             </button>
+            <button class="report-btn" id="report-question-btn" type="button" aria-label="Report a problem with this question">
+              Report
+            </button>
           </div>
         </div>
 
@@ -1415,6 +1685,28 @@ function bindQuizEvents(question) {
     });
   }
 
+  const reportBtn = app.querySelector("#report-question-btn");
+  if (reportBtn) {
+    reportBtn.addEventListener("click", async () => {
+      const message = window.prompt(
+        "What is wrong with this question, answer, or explanation?",
+        "",
+      );
+      if (!message || !message.trim()) return;
+      reportBtn.disabled = true;
+      reportBtn.textContent = "Reporting...";
+      try {
+        await saveQuestionReport(state.exam, question, message.trim());
+        window.alert("Thanks. The report was sent to the admin queue.");
+      } catch (err) {
+        console.error("Could not save report.", err);
+        window.alert("Could not save the report. Please try again later.");
+      } finally {
+        renderQuiz({ scrollToTop: false });
+      }
+    });
+  }
+
   const checkBtn = app.querySelector("#check-answer-btn");
   if (checkBtn) {
     checkBtn.addEventListener("click", () => {
@@ -1483,10 +1775,13 @@ async function submitTest({ skipUnansweredConfirm = false } = {}) {
 
   state.results = state.questions.map((question) => {
     const userAnswer = getUserAnswer(question);
+    const correct = isCorrect(question);
+    const usePartial = state.mode === "real-deal" && state.realDealPartialCredit;
     return {
       question,
       userAnswer,
-      correct: isCorrect(question),
+      correct,
+      score: usePartial ? getPartialScore(question) : (correct ? 1 : 0),
       timeSpent: state.questionTimes[question.id] || 0,
     };
   });
@@ -1515,21 +1810,34 @@ function resultMessage(percent) {
 }
 
 function reviewCard(result) {
-  const { question, correct, timeSpent } = result;
+  const { question, correct, timeSpent, score } = result;
   const userAnswer = formatAnswerDisplay(question, state.answers[question.id]);
   const roundedTime = Math.round(timeSpent);
   const isSlow = roundedTime >= SLOW_THRESHOLD_SECONDS;
   const timeLabel = roundedTime >= 60
     ? `${Math.floor(roundedTime / 60)}m ${roundedTime % 60}s`
     : `${roundedTime}s`;
+  const isPartialMatrix = state.mode === "real-deal" && state.realDealPartialCredit
+    && (question.interaction.type === "matrix" || question.interaction.type === "fields")
+    && score !== undefined && score > 0 && score < 1;
+  const partialBadge = isPartialMatrix
+    ? (function() {
+        const total = question.interaction.type === "matrix"
+          ? question.interaction.correct.length
+          : question.interaction.fields.length;
+        const got = Math.round(score * total);
+        return '<span class="partial-score-badge">' + got + '/' + total + '</span>';
+      })()
+    : "";
   return `
-    <article class="review-card ${correct ? "" : "incorrect"}" data-correct="${correct}">
+    <article class="review-card ${correct ? "" : (isPartialMatrix ? "partial" : "incorrect")}" data-correct="${correct}">
       <button class="review-summary" type="button" aria-expanded="false">
-        <span class="review-icon">${correct ? "✓" : "×"}</span>
+        <span class="review-icon">${correct ? "✓" : (isPartialMatrix ? "◐" : "×")}</span>
         <span>
           <strong>Question ${question.id}</strong>
-          <small>${correct ? "Correct" : "Needs review"}${isSlow ? " · \ud83d\udc22 slow" : ""}</small>
+          <small>${correct ? "Correct" : (isPartialMatrix ? "Partial credit" : "Needs review")}${isSlow ? " · \ud83d\udc22 slow" : ""}</small>
         </span>
+        ${partialBadge}
         <span class="review-time ${isSlow ? "review-time--slow" : ""}">\u23f1 ${timeLabel}</span>
         <span class="review-chevron">⌄</span>
       </button>
@@ -1566,7 +1874,21 @@ function renderResults() {
   document.title = `Your result · ${examConfig().code} Practice Lab`;
   const correct = state.results.filter((result) => result.correct).length;
   const total = state.results.length;
-  const percent = Math.round((correct / total) * 100);
+  const isRealDeal = state.mode === "real-deal";
+  const usePartial = isRealDeal && state.realDealPartialCredit;
+
+  // Compute score
+  let totalScore, maxScore, percent;
+  if (usePartial) {
+    totalScore = state.results.reduce((sum, r) => sum + (r.score || 0), 0);
+    maxScore = total;
+    percent = Math.round((totalScore / maxScore) * 100);
+  } else {
+    totalScore = correct;
+    maxScore = total;
+    percent = Math.round((correct / total) * 100);
+  }
+
   const incorrect = total - correct;
   const wrongAnswersJson = getWrongAnswersExportText();
   const visible =
@@ -1574,24 +1896,67 @@ function renderResults() {
       ? state.results.filter((result) => !result.correct)
       : state.results;
 
+  // Domain breakdown for Real Deal
+  let domainBreakdownHtml = "";
+  if (isRealDeal) {
+    const domainStats = {};
+    for (const r of state.results) {
+      const domain = getQuestionDomain(r.question);
+      if (!domainStats[domain]) domainStats[domain] = { score: 0, max: 0 };
+      domainStats[domain].score += usePartial ? (r.score || 0) : (r.correct ? 1 : 0);
+      domainStats[domain].max += 1;
+    }
+    const rows = REAL_DEAL_DOMAINS.map((d) => {
+      const stats = domainStats[d.name] || { score: 0, max: 0 };
+      const pct = stats.max > 0 ? Math.round((stats.score / stats.max) * 100) : 0;
+      const scoreDisplay = usePartial
+        ? stats.score.toFixed(1) + " / " + stats.max
+        : Math.round(stats.score) + " / " + stats.max;
+      return "<tr>"
+        + "<td>" + escapeHtml(d.name) + "</td>"
+        + "<td>" + scoreDisplay + "</td>"
+        + "<td><div class=\"domain-bar\"><div class=\"domain-bar-fill\" style=\"width:" + pct + "%\"></div></div></td>"
+        + "<td>" + pct + "%</td>"
+        + "</tr>";
+    }).join("");
+
+    domainBreakdownHtml = `
+      <section class="domain-breakdown">
+        <h2>Domain breakdown</h2>
+        <p>Score distribution across the four official SC-900 exam domains.</p>
+        <table>
+          <thead><tr><th>Domain</th><th>Score</th><th>Progress</th><th>%</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>
+    `;
+  }
+
   // Score ring angle for the animated arc
   const deg = Math.round((percent / 100) * 360);
+  const scoreLabel = usePartial ? totalScore.toFixed(1) + " / " + maxScore + " pts" : percent + "%";
 
   app.innerHTML = `
     <section class="results">
       <div class="result-hero">
         <div class="score-ring" style="--score-deg:${deg}deg">
           <strong>${percent}%</strong>
-          <small>final grade</small>
+          <small>${usePartial ? totalScore.toFixed(1) + " pts" : "final grade"}</small>
         </div>
         <div class="result-copy">
-          <p class="eyebrow">Test complete</p>
+          <p class="eyebrow">${isRealDeal ? "Real Deal Simulation complete" : "Test complete"}</p>
           <h1>${resultMessage(percent)}</h1>
-          <p>Your result is graded against the answer key in the supplied ${examConfig().code} PDF.</p>
+          <p>Your result is graded against the answer key in the supplied ${examConfig().code} PDF.${usePartial ? " Partial credit is enabled for Yes/No questions." : ""}</p>
           <div class="result-stats">
-            <div><strong>${correct}</strong><span>Correct</span></div>
-            <div><strong>${incorrect}</strong><span>Incorrect</span></div>
-            <div><strong>${total}</strong><span>Questions</span></div>
+            ${usePartial ? `
+              <div><strong>${totalScore.toFixed(1)}</strong><span>Points</span></div>
+              <div><strong>${maxScore}</strong><span>Max points</span></div>
+              <div><strong>${total}</strong><span>Questions</span></div>
+            ` : `
+              <div><strong>${correct}</strong><span>Correct</span></div>
+              <div><strong>${incorrect}</strong><span>Incorrect</span></div>
+              <div><strong>${total}</strong><span>Questions</span></div>
+            `}
           </div>
         </div>
         <div class="result-actions">
@@ -1599,6 +1964,8 @@ function renderResults() {
           <button class="ghost-button" type="button" id="home">Change mode</button>
         </div>
       </div>
+
+      ${domainBreakdownHtml}
 
       <section class="export-panel">
         <div class="export-copy">
@@ -1694,6 +2061,625 @@ function renderResults() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+// ─── Admin dashboard ─────────────────────────────────────────────────────────
+
+function adminDate(value) {
+  return value ? value.toLocaleString() : "Never";
+}
+
+function rawQuestionFor(exam, id) {
+  return (state.rawBanks[exam] || []).find((question) => String(question.id) === String(id));
+}
+
+function editedQuestionFor(exam, id) {
+  const edit = state.questionEdits[exam]?.[String(id)];
+  return edit?.question || rawQuestionFor(exam, id);
+}
+
+async function renderAdminDashboard(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    renderHome();
+    return;
+  }
+
+  clearQuizKeyHandler();
+  stopQuestionTimer();
+  state.view = "admin";
+
+  const selectedExam = options.exam || state.exam;
+  const users = await listUserProfiles();
+  const reports = await listQuestionReports();
+  const rawQuestions = state.rawBanks[selectedExam] || [];
+  const selectedQuestionId = options.questionId || rawQuestions[0]?.id;
+  const selectedQuestion = selectedQuestionId
+    ? editedQuestionFor(selectedExam, selectedQuestionId)
+    : null;
+  const selectedEdit = selectedQuestionId
+    ? state.questionEdits[selectedExam]?.[String(selectedQuestionId)]
+    : null;
+  const questionJson = selectedQuestion
+    ? JSON.stringify(selectedQuestion, null, 2)
+    : "";
+  const openReports = reports.filter((report) => report.status !== "fixed");
+
+  document.title = "Admin · Practice Lab";
+  app.innerHTML = `
+    <section class="admin-shell">
+      <div class="admin-hero">
+        <div>
+          <p class="eyebrow">Admin dashboard</p>
+          <h1>Users, reports, and question fixes</h1>
+          <p>Review submitted reports, hide broken questions, and save edited question JSON as Firestore overrides.</p>
+        </div>
+        <div class="admin-actions">
+          <button class="secondary-button" type="button" id="admin-refresh">Refresh</button>
+          <button class="ghost-button" type="button" id="admin-home">Back to practice</button>
+        </div>
+      </div>
+
+      <section class="admin-section">
+        <div class="admin-section-head">
+          <div>
+            <h2>Users</h2>
+            <p>${users.length} profile${users.length === 1 ? "" : "s"} seen by the app.</p>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Sessions</th>
+                <th>Last test</th>
+                <th>Last login</th>
+                <th>UID</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map((user) => `
+                <tr>
+                  <td>${escapeHtml(user.displayName)}</td>
+                  <td>${escapeHtml(user.email)}</td>
+                  <td>${user.isAdmin ? "Admin" : "User"}</td>
+                  <td>${user.totalSessions}</td>
+                  <td>${escapeHtml(adminDate(user.lastSessionAt))}</td>
+                  <td>${escapeHtml(adminDate(user.lastLoginAt))}</td>
+                  <td><code>${escapeHtml(user.uid)}</code></td>
+                </tr>
+              `).join("") || '<tr><td colspan="7">No user profiles found yet.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-grid">
+        <div class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <h2>Reports</h2>
+              <p>${openReports.length} open report${openReports.length === 1 ? "" : "s"}.</p>
+            </div>
+          </div>
+          <div class="admin-report-list">
+            ${reports.map((report) => `
+              <article class="admin-report ${report.status === "fixed" ? "admin-report-fixed" : ""}">
+                <div>
+                  <strong>${escapeHtml(EXAMS[report.exam]?.code || report.exam)} #${escapeHtml(report.questionId)}</strong>
+                  <span>${escapeHtml(report.userName)} · ${escapeHtml(adminDate(report.createdAt))}</span>
+                </div>
+                <p>${escapeHtml(report.message)}</p>
+                <small>${escapeHtml((report.prompt || "").slice(0, 140))}${report.prompt?.length > 140 ? "..." : ""}</small>
+                <div class="admin-report-actions">
+                  <button type="button" data-report-edit="${escapeHtml(report.id)}" data-report-exam="${escapeHtml(report.exam)}" data-report-question="${escapeHtml(report.questionId)}">Edit question</button>
+                  <button type="button" data-report-status="${escapeHtml(report.id)}" data-status="${report.status === "fixed" ? "open" : "fixed"}">
+                    ${report.status === "fixed" ? "Reopen" : "Mark fixed"}
+                  </button>
+                </div>
+              </article>
+            `).join("") || '<p class="admin-empty">No reports yet.</p>'}
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <h2>Question editor</h2>
+              <p>Changes are saved as overrides. Hidden questions are removed from practice runs.</p>
+            </div>
+          </div>
+
+          <div class="admin-editor-controls">
+            <label>
+              <span>Exam</span>
+              <select id="admin-exam-select">
+                ${Object.entries(EXAMS).map(([key, exam]) => `
+                  <option value="${key}" ${key === selectedExam ? "selected" : ""}>${exam.code}</option>
+                `).join("")}
+              </select>
+            </label>
+            <label>
+              <span>Question</span>
+              <select id="admin-question-select">
+                ${rawQuestions.map((question) => {
+                  const edit = state.questionEdits[selectedExam]?.[String(question.id)];
+                  const suffix = edit?.deleted ? " hidden" : edit?.question ? " edited" : "";
+                  return `<option value="${escapeHtml(question.id)}" ${String(question.id) === String(selectedQuestionId) ? "selected" : ""}>#${escapeHtml(question.id)}${suffix}</option>`;
+                }).join("")}
+              </select>
+            </label>
+          </div>
+
+          ${selectedQuestion ? `
+            <div class="admin-editor-status">
+              <span>${selectedEdit?.question ? "Edited override saved" : "Using source JSON"}</span>
+              <span>${selectedEdit?.deleted ? "Hidden from tests" : "Visible in tests"}</span>
+            </div>
+            <textarea id="admin-question-json" class="admin-json-editor" spellcheck="false">${escapeHtml(questionJson)}</textarea>
+            <div class="admin-editor-actions">
+              <button class="primary-button" type="button" id="admin-save-question">Save edit</button>
+              <button class="home-action-btn home-action-btn--danger" type="button" id="admin-hide-question">Remove from test</button>
+              <button class="home-action-btn" type="button" id="admin-restore-question">Restore question</button>
+            </div>
+            <p class="admin-editor-note">After saving, users will see the edited version the next time the question bank loads.</p>
+          ` : '<p class="admin-empty">No questions found for this exam.</p>'}
+        </div>
+      </section>
+    </section>
+  `;
+
+  document.getElementById("admin-home")?.addEventListener("click", () => renderHome());
+  document.getElementById("admin-refresh")?.addEventListener("click", async () => {
+    await reloadEditedBanks();
+    renderAdminDashboard({ exam: selectedExam, questionId: selectedQuestionId });
+  });
+
+  document.getElementById("admin-exam-select")?.addEventListener("change", (event) => {
+    renderAdminDashboard({ exam: event.target.value });
+  });
+
+  document.getElementById("admin-question-select")?.addEventListener("change", (event) => {
+    renderAdminDashboard({ exam: selectedExam, questionId: event.target.value });
+  });
+
+  document.getElementById("admin-save-question")?.addEventListener("click", async () => {
+    const textarea = document.getElementById("admin-question-json");
+    try {
+      const parsed = JSON.parse(textarea.value);
+      if (!parsed.id) throw new Error("Question JSON must include an id.");
+      await saveQuestionEdit(selectedExam, parsed);
+      await reloadEditedBanks();
+      window.alert("Question edit saved.");
+      renderAdminDashboard({ exam: selectedExam, questionId: parsed.id });
+    } catch (err) {
+      window.alert(`Could not save question: ${err.message}`);
+    }
+  });
+
+  document.getElementById("admin-hide-question")?.addEventListener("click", async () => {
+    if (!window.confirm(`Remove question #${selectedQuestionId} from ${EXAMS[selectedExam].code} practice runs?`)) return;
+    await hideQuestion(selectedExam, selectedQuestionId);
+    await reloadEditedBanks();
+    renderAdminDashboard({ exam: selectedExam, questionId: selectedQuestionId });
+  });
+
+  document.getElementById("admin-restore-question")?.addEventListener("click", async () => {
+    await restoreQuestion(selectedExam, selectedQuestionId);
+    await reloadEditedBanks();
+    renderAdminDashboard({ exam: selectedExam, questionId: selectedQuestionId });
+  });
+
+  app.querySelectorAll("[data-report-edit]").forEach((button) => {
+    button.addEventListener("click", () => {
+      renderAdminDashboard({
+        exam: button.dataset.reportExam,
+        questionId: button.dataset.reportQuestion,
+      });
+    });
+  });
+
+  app.querySelectorAll("[data-report-status]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await updateQuestionReportStatus(button.dataset.reportStatus, button.dataset.status);
+      renderAdminDashboard({ exam: selectedExam, questionId: selectedQuestionId });
+    });
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ─── Memorise mode ────────────────────────────────────────────────────────────
+
+function renderMemoriseCard() {
+  clearQuizKeyHandler();
+  stopQuestionTimer();
+  const mem = state.memorise;
+  if (mem.queue.length === 0) {
+    if (mem.currentBatchIndex < mem.totalBatches - 1) {
+      mem.currentBatchIndex++;
+      const start = mem.currentBatchIndex * mem.batchSize;
+      mem.queue = mem.allQuestions.slice(start, start + mem.batchSize);
+    } else {
+      renderMemoriseComplete();
+      return;
+    }
+  }
+
+  const question = mem.queue[0];
+  const mastered = mem.mastered.size;
+  const total = mem.totalInSession;
+  const remaining = mem.queue.length;
+  const progressPercent = Math.round((mastered / total) * 100);
+  const attemptCount = mem.attempts[question.id] || 0;
+  const config = examConfig();
+  document.title = `Memorise · ${config.code} Practice Lab`;
+
+  app.innerHTML = `
+    <section class="memorise-shell">
+      <div class="memorise-topbar">
+        <button class="memorise-quit" type="button" id="memorise-quit">← Quit</button>
+        <div class="memorise-stats">
+          <span class="memorise-mastered">🧠 ${mastered} mastered</span>
+          <span class="memorise-remaining">📋 Batch ${mem.currentBatchIndex + 1}: ${remaining} remaining</span>
+        </div>
+      </div>
+      <div class="memorise-progress-track">
+        <div class="memorise-progress-fill" style="width:${progressPercent}%"></div>
+      </div>
+
+      <article class="memorise-card">
+        <div class="question-head">
+          <div>
+            <span class="question-number">Batch ${mem.currentBatchIndex + 1} of ${mem.totalBatches} • Mastered ${mastered} of ${total}</span>
+            <span class="question-type">Source #${question.id} · ${
+              question.interaction.type === "matrix"
+                ? "Yes / No"
+                : question.interaction.type === "fields"
+                  ? "Dropdowns"
+                  : question.interaction.type === "multi"
+                  ? "Multiple select"
+                : "Multiple choice"
+            }</span>
+          </div>
+          <div class="question-actions">
+            ${attemptCount > 0 ? `<span class="memorise-retry-badge">Retry #${attemptCount}</span>` : ""}
+            <button class="report-btn" id="report-question-btn" type="button" aria-label="Report a problem with this question">Report</button>
+          </div>
+        </div>
+
+        ${questionTextMarkup(question)}
+
+        ${
+          question.sourceImages?.length
+            ? `
+              <div class="source-control-row">
+                <button
+                  class="source-toggle-btn"
+                  id="source-toggle-btn"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="source-screenshot-panel"
+                >▧ View original PDF question</button>
+              </div>
+              <section class="source-screenshot-panel" id="source-screenshot-panel" hidden>
+                <div class="source-screenshot-head">
+                  <strong>Original PDF question</strong>
+                  <small>Answer section excluded</small>
+                </div>
+                <div class="source-screenshot-list">
+                  ${question.sourceImages
+                    .map(
+                      (path, index) => `
+                        <img
+                          src="${escapeHtml(path)}"
+                          alt="Original PDF screenshot for source question ${question.id}, part ${index + 1}"
+                          loading="lazy"
+                        />
+                      `,
+                    )
+                    .join("")}
+                </div>
+              </section>
+            `
+            : ""
+        }
+
+        <div class="answer-block">
+          <h3>Your answer</h3>
+          ${mem.revealed ? reviewAnswerControl(question) : answerControl(question)}
+        </div>
+
+        ${mem.revealed ? `
+          <div
+            class="memorise-reveal ${isCorrect(question) ? "feedback-correct" : "feedback-incorrect"}"
+            id="memorise-reveal"
+          >
+            <h3 class="feedback-title">${isCorrect(question) ? "✓ Correct — mastered!" : "✗ Incorrect — this will come back"}</h3>
+            <div class="review-meta">
+              <span class="source-id">Correct answer:</span>
+              <span class="source-key">${escapeHtml(getCorrectAnswerDisplay(question))}</span>
+            </div>
+            ${question.explanation ? `
+              <div class="review-explanation">
+                <strong>Explanation</strong>
+                ${explanationParagraphs(question.explanation)}
+              </div>
+            ` : ""}
+          </div>
+          <nav class="quiz-nav memorise-nav">
+            <button class="primary-button" type="button" id="memorise-next">
+              ${mem.queue.length <= 1 && isCorrect(question) 
+                 ? (mem.currentBatchIndex < mem.totalBatches - 1 ? "Next batch →" : "Finish 🎉") 
+                 : "Next card →"}
+            </button>
+          </nav>
+        ` : `
+          <nav class="quiz-nav memorise-nav">
+            <button class="primary-button" type="button" id="memorise-confirm" ${!isAnswered(question) ? "disabled" : ""}>
+              Confirm answer
+            </button>
+          </nav>
+        `}
+      </article>
+    </section>
+  `;
+
+  // Bind events
+  document.getElementById("memorise-quit")?.addEventListener("click", () => {
+    if (window.confirm("Quit this memorise session? Progress in this session will be lost.")) {
+      renderHome();
+    }
+  });
+
+  const sourceToggle = app.querySelector("#source-toggle-btn");
+  const sourcePanel = app.querySelector("#source-screenshot-panel");
+  if (sourceToggle && sourcePanel) {
+    sourceToggle.addEventListener("click", () => {
+      const willOpen = sourcePanel.hidden;
+      sourcePanel.hidden = !willOpen;
+      sourceToggle.setAttribute("aria-expanded", String(willOpen));
+      sourceToggle.textContent = willOpen
+        ? "▣ Hide original PDF question"
+        : "▧ View original PDF question";
+    });
+  }
+
+  const reportBtn = app.querySelector("#report-question-btn");
+  if (reportBtn) {
+    reportBtn.addEventListener("click", async () => {
+      const message = window.prompt(
+        "What is wrong with this question, answer, or explanation?",
+        "",
+      );
+      if (!message || !message.trim()) return;
+      reportBtn.disabled = true;
+      reportBtn.textContent = "Reporting...";
+      try {
+        await saveQuestionReport(state.exam, question, message.trim());
+        window.alert("Thanks. The report was sent to the admin queue.");
+      } catch (err) {
+        console.error("Could not save report.", err);
+        window.alert("Could not save the report. Please try again later.");
+      } finally {
+        renderMemoriseCard();
+      }
+    });
+  }
+
+
+  if (!mem.revealed) {
+    bindMemoriseInputEvents(question);
+    document.getElementById("memorise-confirm")?.addEventListener("click", () => {
+      confirmMemoriseAnswer();
+    });
+  } else {
+    document.getElementById("memorise-next")?.addEventListener("click", () => {
+      advanceMemoriseQueue();
+    });
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function bindMemoriseInputEvents(question) {
+  // Single / Multi choice
+  app.querySelectorAll(".choice input").forEach((input) => {
+    input.addEventListener("change", () => {
+      if (question.interaction.type === "single") {
+        state.answers[question.id] = input.value;
+      } else {
+        const selected = [...app.querySelectorAll(".choice input:checked")].map((item) => item.value);
+        state.answers[question.id] = selected;
+      }
+      app.querySelectorAll(".choice").forEach((choice) => {
+        choice.classList.toggle("selected", choice.querySelector("input").checked);
+      });
+      const confirmBtn = document.getElementById("memorise-confirm");
+      if (confirmBtn) confirmBtn.disabled = !isAnswered(question);
+    });
+  });
+
+  // Matrix
+  app.querySelectorAll("[data-matrix-index]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const answers = Array.isArray(state.answers[question.id])
+        ? [...state.answers[question.id]]
+        : Array(question.interaction.statements.length).fill("");
+      answers[Number(input.dataset.matrixIndex)] = input.value;
+      state.answers[question.id] = answers;
+      const row = input.closest(".matrix-row");
+      row.querySelectorAll(".matrix-choice").forEach((choice) => {
+        choice.classList.toggle("selected", choice.querySelector("input").checked);
+      });
+      const confirmBtn = document.getElementById("memorise-confirm");
+      if (confirmBtn) confirmBtn.disabled = !isAnswered(question);
+    });
+  });
+
+  // Fields / dropdowns
+  app.querySelectorAll("[data-field-index]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const answers = Array.isArray(state.answers[question.id])
+        ? [...state.answers[question.id]]
+        : Array(question.interaction.fields.length).fill("");
+      answers[Number(select.dataset.fieldIndex)] = select.value;
+      state.answers[question.id] = answers;
+      const confirmBtn = document.getElementById("memorise-confirm");
+      if (confirmBtn) confirmBtn.disabled = !isAnswered(question);
+    });
+  });
+}
+
+function confirmMemoriseAnswer() {
+  const mem = state.memorise;
+  const question = mem.queue[0];
+  mem.attempts[question.id] = (mem.attempts[question.id] || 0) + 1;
+  mem.revealed = true;
+  renderMemoriseCard();
+  // Scroll to feedback
+  window.requestAnimationFrame(() => {
+    document.getElementById("memorise-reveal")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
+
+function advanceMemoriseQueue() {
+  const mem = state.memorise;
+  const question = mem.queue.shift();
+  const correct = isCorrect(question);
+
+  if (correct) {
+    mem.mastered.add(question.id);
+  } else {
+    // Re-insert the question 5–10 positions ahead (randomised)
+    // Re-shuffle its options so it looks fresh
+    const reinsertAt = Math.min(
+      mem.queue.length,
+      5 + Math.floor(Math.random() * 6),
+    );
+    const reshuffled = shuffleQuestionOptions(question);
+    mem.queue.splice(reinsertAt, 0, reshuffled);
+    // Clear the previous answer so the user starts fresh
+    delete state.answers[question.id];
+  }
+
+  mem.revealed = false;
+  renderMemoriseCard();
+}
+
+function renderMemoriseComplete() {
+  const mem = state.memorise;
+  const config = examConfig();
+  document.title = `Memorise complete · ${config.code} Practice Lab`;
+
+  // Build retry stats sorted by most retries
+  const retryEntries = Object.entries(mem.attempts)
+    .map(([id, count]) => ({ id: Number(id) || id, count }))
+    .sort((a, b) => b.count - a.count);
+  const totalAttempts = retryEntries.reduce((sum, e) => sum + e.count, 0);
+  const hardest = retryEntries.filter((e) => e.count > 1);
+
+  app.innerHTML = `
+    <section class="memorise-complete">
+      <div class="memorise-complete-hero">
+        <div class="memorise-complete-icon">🧠</div>
+        <p class="eyebrow">${config.code} memorise session</p>
+        <h1>All ${mem.totalInSession} questions mastered!</h1>
+        <p class="hero-copy">
+          You drilled every question until you got it right.
+          ${hardest.length > 0
+            ? hardest.length + " question" + (hardest.length === 1 ? "" : "s") + " needed extra attempts."
+            : "Perfect recall on every single question — outstanding!"
+          }
+        </p>
+        <div class="result-stats">
+          <div><strong>${mem.totalInSession}</strong><span>Mastered</span></div>
+          <div><strong>${totalAttempts}</strong><span>Total attempts</span></div>
+          <div><strong>${hardest.length}</strong><span>Needed retries</span></div>
+        </div>
+        <div class="result-actions">
+          <button class="secondary-button" type="button" id="memorise-restart">Run again</button>
+          <button class="ghost-button" type="button" id="memorise-home">Back to menu</button>
+        </div>
+      </div>
+
+      ${hardest.length > 0 ? `
+        <section class="review-section">
+          <div class="review-toolbar">
+            <div>
+              <h2>Questions that needed extra work</h2>
+              <p>These took more than one attempt. Consider flagging them for future review.</p>
+            </div>
+          </div>
+          <div class="review-list">
+            ${hardest.map((entry) => {
+              const q = state.bank.find((bq) => bq.id === entry.id);
+              if (!q) return "";
+              const text = q.prompt || "";
+              const preview = escapeHtml(text.substring(0, 100)) + (text.length > 100 ? "…" : "");
+              return `
+                <article class="review-card incorrect" data-retry-id="${q.id}">
+                  <button class="review-summary" type="button" aria-expanded="false">
+                    <span class="review-icon">×</span>
+                    <span>
+                      <strong>Question #${q.id}</strong>
+                      <small>${entry.count} attempt${entry.count === 1 ? "" : "s"} · ${preview}</small>
+                    </span>
+                    <span class="memorise-retry-badge">${entry.count}×</span>
+                    <span class="review-chevron">⌄</span>
+                  </button>
+                  <div class="review-details">
+                    ${questionTextMarkup(q)}
+                    <div class="review-meta">
+                      <span class="source-id">Correct answer:</span>
+                      <span class="source-key">${escapeHtml(getCorrectAnswerDisplay(q))}</span>
+                    </div>
+                    ${q.explanation ? `
+                      <div class="review-explanation">
+                        <strong>Explanation</strong>
+                        ${explanationParagraphs(q.explanation)}
+                      </div>
+                    ` : ""}
+                    <div class="flagged-actions">
+                      <button class="home-action-btn" type="button" data-memorise-flag="${q.id}">
+                        ${state.flags.has(q.id) ? "🚩 Flagged" : "⚑ Flag for review"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              `;
+            }).join("")}
+          </div>
+        </section>
+      ` : ""}
+    </section>
+  `;
+
+  // Bind events
+  document.getElementById("memorise-restart")?.addEventListener("click", startTest);
+  document.getElementById("memorise-home")?.addEventListener("click", () => {
+    renderHome();
+  });
+
+  app.querySelectorAll(".review-summary").forEach((button) => {
+    button.addEventListener("click", () => {
+      const card = button.closest(".review-card");
+      const isOpen = card.classList.toggle("open");
+      button.setAttribute("aria-expanded", String(isOpen));
+    });
+  });
+
+  app.querySelectorAll("[data-memorise-flag]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const qid = Number(button.dataset.memoriseFlag) || button.dataset.memoriseFlag;
+      toggleFlag(qid);
+      button.textContent = state.flags.has(qid) ? "🚩 Flagged" : "⚑ Flag for review";
+    });
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 Promise.all(
@@ -1706,11 +2692,13 @@ Promise.all(
   }),
 )
   .then((banks) => {
-    state.banks = Object.fromEntries(banks);
-    state.bank = state.banks[state.exam];
+    state.rawBanks = Object.fromEntries(banks);
+    state.banks = applyQuestionEdits(state.rawBanks, {});
+    refreshBank();
 
     initAuth(async (user) => {
       updateHeaderUser(user);
+      await reloadEditedBanks();
       // Set initial custom count to half
       state.customCount = halfCount();
       // Load historical wrong question IDs from API

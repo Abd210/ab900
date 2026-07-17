@@ -32,6 +32,174 @@ async function saveSession(payload, mode, exam) {
   }
 }
 
+async function listUserProfiles() {
+  if (!isCurrentUserAdmin()) return [];
+
+  try {
+    const snapshot = await db.collection("userProfiles")
+      .orderBy("lastLoginAt", "desc")
+      .get();
+    const users = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      users.push({
+        id: doc.id,
+        uid: data.uid || doc.id,
+        displayName: data.displayName || "Student",
+        email: data.email || "",
+        isAdmin: Boolean(data.isAdmin),
+        createdAt: data.createdAt?.toDate?.() || null,
+        lastLoginAt: data.lastLoginAt?.toDate?.() || null,
+        totalSessions: 0,
+        lastSessionAt: null,
+      });
+    });
+    await Promise.all(users.map(async (profile) => {
+      try {
+        const sessions = await db.collection("users")
+          .doc(profile.uid)
+          .collection("sessions")
+          .orderBy("timestamp", "desc")
+          .get();
+        profile.totalSessions = sessions.size;
+        const latest = sessions.docs[0]?.data?.();
+        profile.lastSessionAt = latest?.timestamp?.toDate?.() || null;
+      } catch (err) {
+        console.warn("Could not load sessions for user profile.", profile.uid, err);
+      }
+    }));
+    return users;
+  } catch (err) {
+    console.error("Could not load user profiles:", err);
+    return [];
+  }
+}
+
+async function loadQuestionEdits() {
+  try {
+    const edits = {};
+    await Promise.all(
+      Object.keys(EXAMS).map(async (exam) => {
+        const snapshot = await db.collection("questionEdits")
+          .doc(exam)
+          .collection("items")
+          .get();
+        edits[exam] = {};
+        snapshot.forEach((doc) => {
+          edits[exam][doc.id] = doc.data();
+        });
+      }),
+    );
+    return edits;
+  } catch (err) {
+    console.warn("Could not load question edits:", err);
+    return {};
+  }
+}
+
+async function saveQuestionEdit(exam, question) {
+  if (!isCurrentUserAdmin()) return;
+  const user = getCurrentUser();
+  await db.collection("questionEdits")
+    .doc(exam)
+    .collection("items")
+    .doc(String(question.id))
+    .set({
+      question,
+      deleted: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: user?.uid || "",
+      updatedByName: user?.displayName || user?.email || "Admin",
+    }, { merge: true });
+}
+
+async function hideQuestion(exam, questionId) {
+  if (!isCurrentUserAdmin()) return;
+  const user = getCurrentUser();
+  await db.collection("questionEdits")
+    .doc(exam)
+    .collection("items")
+    .doc(String(questionId))
+    .set({
+      deleted: true,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: user?.uid || "",
+      updatedByName: user?.displayName || user?.email || "Admin",
+    }, { merge: true });
+}
+
+async function restoreQuestion(exam, questionId) {
+  if (!isCurrentUserAdmin()) return;
+  const user = getCurrentUser();
+  await db.collection("questionEdits")
+    .doc(exam)
+    .collection("items")
+    .doc(String(questionId))
+    .set({
+      deleted: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: user?.uid || "",
+      updatedByName: user?.displayName || user?.email || "Admin",
+    }, { merge: true });
+}
+
+async function saveQuestionReport(exam, question, message) {
+  const user = getCurrentUser();
+  if (!user) return;
+  await db.collection("questionReports").doc().set({
+    exam,
+    questionId: question.id,
+    prompt: question.prompt || "",
+    message,
+    status: "open",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    userId: user.uid,
+    userName: user.displayName || user.email?.split("@")[0] || "Student",
+    userEmail: user.email || "",
+  });
+}
+
+async function listQuestionReports() {
+  if (!isCurrentUserAdmin()) return [];
+
+  try {
+    const snapshot = await db.collection("questionReports")
+      .orderBy("createdAt", "desc")
+      .limit(100)
+      .get();
+    const reports = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      reports.push({
+        id: doc.id,
+        exam: data.exam || "ab",
+        questionId: data.questionId,
+        prompt: data.prompt || "",
+        message: data.message || "",
+        status: data.status || "open",
+        userId: data.userId || "",
+        userName: data.userName || "Student",
+        userEmail: data.userEmail || "",
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null,
+      });
+    });
+    return reports;
+  } catch (err) {
+    console.error("Could not load question reports:", err);
+    return [];
+  }
+}
+
+async function updateQuestionReportStatus(reportId, status) {
+  if (!isCurrentUserAdmin()) return;
+  await db.collection("questionReports").doc(reportId).set({
+    status,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+}
+
 /**
  * Load wrong question IDs from Firestore.
  * Returns { smart: Set, all: Set }

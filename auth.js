@@ -15,15 +15,64 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const USER_ACCESS_TOKEN = "thegoodstuff";
+const ADMIN_ACCESS_TOKEN = "theadminstuff";
+const ADMIN_STORAGE_KEY = "practice-lab-admin-uids";
+const ADMIN_ACCOUNT_EMAIL = "thegoodstuff@ab900.local";
 
 function getCurrentUser() {
   return auth.currentUser;
 }
 
 function signOutUser() {
+  const user = getCurrentUser();
+  if (user) {
+    const admins = getStoredAdminUids();
+    admins.delete(user.uid);
+    localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify([...admins]));
+  }
   auth.signOut().then(() => {
     renderAuthScreen();
   });
+}
+
+function getStoredAdminUids() {
+  try {
+    const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberAdminUser(uid) {
+  const admins = getStoredAdminUids();
+  admins.add(uid);
+  localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify([...admins]));
+}
+
+function isCurrentUserAdmin() {
+  const user = getCurrentUser();
+  return Boolean(
+    user &&
+      (user.email === ADMIN_ACCOUNT_EMAIL || getStoredAdminUids().has(user.uid)),
+  );
+}
+
+async function upsertUserProfile(user, { isAdmin = false } = {}) {
+  if (!user || typeof db === "undefined") return;
+  try {
+    await db.collection("userProfiles").doc(user.uid).set({
+      uid: user.uid,
+      displayName: user.displayName || user.email?.split("@")[0] || "Student",
+      email: user.email || "",
+      isAdmin: Boolean(isAdmin || isCurrentUserAdmin()),
+      lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Could not save user profile.", err);
+  }
 }
 
 let _onAuthSuccess = null;
@@ -32,6 +81,7 @@ function initAuth(onSuccess) {
   _onAuthSuccess = onSuccess;
   auth.onAuthStateChanged((user) => {
     if (user) {
+      upsertUserProfile(user, { isAdmin: isCurrentUserAdmin() });
       onSuccess(user);
     } else {
       renderAuthScreen();
@@ -133,8 +183,8 @@ function renderAuthScreen() {
     if (password.length < 6) return showError("Password must be at least 6 characters.");
     if (!token) return showError("Please enter the access token.");
     
-    // Hardcoded token check
-    if (token !== "thegoodstuff") {
+    const isAdminToken = token === ADMIN_ACCESS_TOKEN;
+    if (token !== USER_ACCESS_TOKEN && !isAdminToken) {
       return showError("Invalid access token.");
     }
 
@@ -145,13 +195,18 @@ function renderAuthScreen() {
     // We map the "name" to a mock email for Firebase Auth
     // Because Firebase requires emails, we just append @ab900.local
     const mockEmail = `${name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@ab900.local`;
+    const isConfiguredAdminAccount = mockEmail === ADMIN_ACCOUNT_EMAIL;
 
     try {
       if (currentTab === "login") {
-        await auth.signInWithEmailAndPassword(mockEmail, password);
+        const cred = await auth.signInWithEmailAndPassword(mockEmail, password);
+        if (isAdminToken || isConfiguredAdminAccount) rememberAdminUser(cred.user.uid);
+        await upsertUserProfile(cred.user, { isAdmin: isAdminToken || isConfiguredAdminAccount });
       } else {
         const cred = await auth.createUserWithEmailAndPassword(mockEmail, password);
         await cred.user.updateProfile({ displayName: name });
+        if (isAdminToken || isConfiguredAdminAccount) rememberAdminUser(cred.user.uid);
+        await upsertUserProfile(cred.user, { isAdmin: isAdminToken || isConfiguredAdminAccount });
       }
       // onAuthStateChanged will handle the redirect
     } catch (err) {
